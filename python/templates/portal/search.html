@@ -1,0 +1,57 @@
+{% extends 'portal/base.html' %}
+{% block content %}
+<h2>Search for members</h2>
+{% if error %}<p class="msg">{{ error }}</p>{% endif %}
+<form method="post">{% csrf_token %}
+  <label><input type="checkbox" name="only_not_contacts" value="1"> Only members not yet my contacts</label>
+  <label><input type="checkbox" name="in_my_country" value="1"> Only members in my country</label>
+  <label>Max distance (km) <input name="max_km"></label>
+  <label>Motto contains <input name="motto_contains"></label>
+  <label>TTT types (comma-separated, e.g. INTP,ESTJ) <input name="ttt_types"></label>
+  <label>Plot X variable
+    <select name="x_var">
+      <option value="ei" {% if x_var == 'ei' %}selected{% endif %}>E-I</option>
+      <option value="sn" {% if x_var == 'sn' %}selected{% endif %}>S-N</option>
+      <option value="tf" {% if x_var == 'tf' %}selected{% endif %}>T-F</option>
+      <option value="jp" {% if x_var == 'jp' %}selected{% endif %}>J-P</option>
+    </select>
+  </label>
+  <label>Plot Y variable
+    <select name="y_var">
+      <option value="ei" {% if y_var == 'ei' %}selected{% endif %}>E-I</option>
+      <option value="sn" {% if y_var == 'sn' %}selected{% endif %}>S-N</option>
+      <option value="tf" {% if y_var == 'tf' %}selected{% endif %}>T-F</option>
+      <option value="jp" {% if y_var == 'jp' %}selected{% endif %}>J-P</option>
+    </select>
+  </label>
+  <button type="submit">Search</button>
+</form>
+
+{% if members != None %}
+  <h3>Results ({{ members|length }})</h3>
+  {% if members %}
+    <img src="{% url 'member_plot' %}?members={% for row in members %}{{ row.member.username }}{% if not forloop.last %},{% endif %}{% endfor %}&x={{ x_var }}&y={{ y_var }}" alt="Member overview plot">
+    <form method="post" action="{% url 'send_rcd' %}">{% csrf_token %}
+      <input type="hidden" name="next" value="{% url 'search' %}">
+      <table>
+        <tr><th></th><th>User</th><th>Town</th><th>Country</th><th>Mottos</th><th>TTT</th><th>Enneagram</th><th>Status</th></tr>
+        {% for row in members %}
+          <tr>
+            <td>{% if row.can_send %}<input type="checkbox" name="members" value="{{ row.member.username }}">{% endif %}</td>
+            <td><a href="{% url 'status' username=row.member.username %}">{{ row.member.username }}</a></td>
+            <td>{{ row.profile.town }}</td>
+            <td>{{ row.profile.country }}</td>
+            <td>{{ row.profile.motto1 }}{% if row.profile.motto2 %}, {{ row.profile.motto2 }}{% endif %}</td>
+            <td>{% if row.ttt %}{{ row.ttt.ttt_type }}{% else %}-{% endif %}</td>
+            <td>{{ row.profile.enneagramtype1 }}/{{ row.profile.enneagramtype2 }}</td>
+            <td>{{ row.status }}</td>
+          </tr>
+        {% endfor %}
+      </table>
+      <button type="submit" name="action" value="send">Send RCD</button>
+    </form>
+  {% else %}
+    <p>No members found.</p>
+  {% endif %}
+{% endif %}
+{% endblock %}

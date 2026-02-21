@@ -1,0 +1,10 @@
+body { font-family: sans-serif; margin: 0; background: #fafafa; }
+header { background: #1f3b66; color: #fff; padding: 0.8rem 1rem; }
+nav a { color: #fff; margin-right: 1rem; }
+main { max-width: 960px; margin: 1rem auto; background: #fff; padding: 1rem; border: 1px solid #ddd; }
+label { display: block; margin: 0.4rem 0; }
+input, select { min-width: 18rem; }
+fieldset { margin-bottom: 0.7rem; }
+table { border-collapse: collapse; width: 100%; margin-top: 1rem; }
+th, td { border: 1px solid #ddd; padding: 0.35rem; text-align: left; }
+.msg { margin: 0.6rem auto; max-width: 960px; background: #fffae5; padding: 0.6rem; border: 1px solid #e3d69f; }

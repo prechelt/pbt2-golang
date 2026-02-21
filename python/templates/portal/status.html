@@ -1,0 +1,59 @@
+{% extends 'portal/base.html' %}
+{% block content %}
+<h2>Status page: {{ member.username }}</h2>
+<p>Relationship status: {{ relation }}</p>
+
+<h3>Profile</h3>
+{% if own %}
+<form method="post">{% csrf_token %}
+  <label>Full name <input name="fullname" value="{{ member.first_name }}"></label>
+  <label>Email <input type="email" name="email" value="{{ member.email }}"></label>
+  <label>Town <input name="town" value="{{ profile.town }}"></label>
+  <label>Country <input name="country" value="{{ profile.country }}"></label>
+  <label>Motto 1 <input name="motto1" value="{{ profile.motto1 }}"></label>
+  <label>Motto 2 <input name="motto2" value="{{ profile.motto2 }}"></label>
+  <label>Likes <input name="likes" value="{{ profile.likes }}"></label>
+  <label>Dislikes <input name="dislikes" value="{{ profile.dislikes }}"></label>
+  <label>GPS <input name="gps_coordinates" value="{{ profile.gps_coordinates }}"></label>
+  <label>Enneagram 1 <input type="number" name="enneagramtype1" min="0" max="9" value="{{ profile.enneagramtype1 }}"></label>
+  <label>Enneagram 2 <input type="number" name="enneagramtype2" min="0" max="10" value="{{ profile.enneagramtype2 }}"></label>
+  <button type="submit">Save profile</button>
+</form>
+{% else %}
+  {% if show_contact %}
+    <p>Full name: {{ member.first_name }}<br>Email: {{ member.email }}</p>
+  {% else %}
+    <p>Contact details are hidden until you are in contact.</p>
+  {% endif %}
+  <p>Town: {{ profile.town }}, {{ profile.country }}</p>
+  <p>Mottos: {{ profile.motto1 }}{% if profile.motto2 %} | {{ profile.motto2 }}{% endif %}</p>
+{% endif %}
+
+<h3>Temperament Test</h3>
+{% if ttt %}
+  <p>{{ ttt.result }} ({{ ttt.ttt_type }}) at {{ ttt.taken_at }}</p>
+{% else %}
+  <p>No TTT result yet.</p>
+{% endif %}
+{% if own %}<p><a href="{% url 'ttt' %}">Take/re-take TTT</a></p>{% endif %}
+
+{% if own %}
+  <h3>In contact</h3>
+  <ul>{% for row in in_contact %}<li><a href="{% url 'status' username=row.member.username %}">{{ row.member.username }}</a></li>{% empty %}<li>None</li>{% endfor %}</ul>
+
+  <h3>RCD sent</h3>
+  <ul>{% for row in sent %}<li><a href="{% url 'status' username=row.member.username %}">{{ row.member.username }}</a></li>{% empty %}<li>None</li>{% endfor %}</ul>
+
+  <h3>RCD received</h3>
+  <form method="post" action="{% url 'send_rcd' %}">{% csrf_token %}
+    <input type="hidden" name="next" value="{% url 'status' username=user.username %}">
+    {% for row in received %}
+      <label><input type="checkbox" name="members" value="{{ row.member.username }}"> {{ row.member.username }}</label>
+    {% empty %}
+      <p>None</p>
+    {% endfor %}
+    <button type="submit" name="action" value="accept">Accept selected</button>
+    <button type="submit" name="action" value="reject">Reject selected</button>
+  </form>
+{% endif %}
+{% endblock %}

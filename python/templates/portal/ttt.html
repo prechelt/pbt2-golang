@@ -1,0 +1,15 @@
+{% extends 'portal/base.html' %}
+{% block content %}
+<h2>Trivial Temperament Test</h2>
+<form method="post">{% csrf_token %}
+  {% for i, q in questions %}
+    <fieldset>
+      <legend>{{ i|add:1 }}. {{ q.0 }}</legend>
+      <label><input type="radio" name="q{{ i }}" value="{{ q.1.0 }}"> {{ q.1.1 }}</label>
+      <label><input type="radio" name="q{{ i }}" value="{{ q.2.0 }}"> {{ q.2.1 }}</label>
+      <label><input type="radio" name="q{{ i }}" value=""> no answer</label>
+    </fieldset>
+  {% endfor %}
+  <button type="submit">Evaluate</button>
+</form>
+{% endblock %}

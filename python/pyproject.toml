@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "pbt"
+version = "0.1.0"
+description = "PbT (People by Temperament) developer prototype"
+authors = ["PbT Team <dev@example.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+django = "^6.0.2"
+pillow = "^12.1.1"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

@@ -1,0 +1,8 @@
+{% extends 'portal/base.html' %}
+{% block content %}
+<h2>Your TTT result</h2>
+<p>Result: <strong>{{ result.result }}</strong></p>
+<p>MBTI type: <strong>{{ result.ttt_type }}</strong> (<a href="https://en.wikipedia.org/wiki/Myers%E2%80%93Briggs_Type_Indicator" target="_blank" rel="noopener">explanation</a>)</p>
+<p>Keirsey temperament: <strong>{{ result.temperament }}</strong> (<a href="https://www.keirsey.com/temperament-overview/" target="_blank" rel="noopener">explanation</a>)</p>
+<p><a href="{% url 'search' %}">Continue to member search</a></p>
+{% endblock %}

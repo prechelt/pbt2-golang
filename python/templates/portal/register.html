@@ -1,0 +1,28 @@
+{% extends 'portal/base.html' %}
+{% block content %}
+<h2>Registration</h2>
+<form method="post">{% csrf_token %}
+  <label>Full name <input name="fullname" required></label>
+  <label>Email <input type="email" name="email" required></label>
+  <label>Town <input name="town" required></label>
+  <label>Country <input name="country" required></label>
+  <label>Life motto <input name="motto1" required></label>
+  <label>Secondary motto <input name="motto2"></label>
+  <label>Likes (comma-separated) <input name="likes"></label>
+  <label>Dislikes (comma-separated) <input name="dislikes"></label>
+  <label>GPS coordinates <input name="gps_coordinates" placeholder="52.5N, 13.4E"></label>
+  <label>Primary Enneagram
+    <select name="enneagramtype1">
+      <option value="0">unknown</option>{% for i in '123456789' %}<option value="{{ i }}">{{ i }}</option>{% endfor %}
+    </select>
+  </label>
+  <label>Secondary Enneagram
+    <select name="enneagramtype2">
+      <option value="10">none</option><option value="0">unknown</option>{% for i in '123456789' %}<option value="{{ i }}">{{ i }}</option>{% endfor %}
+    </select>
+  </label>
+  <label>Username <input name="username" required></label>
+  <label>Password <input type="password" name="password" required></label>
+  <button type="submit">Register</button>
+</form>
+{% endblock %}
