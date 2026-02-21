@@ -2,7 +2,6 @@ package main
 
 import (
 	"crypto/rand"
-	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"html/template"
@@ -20,6 +19,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 type MemberProfile struct {
@@ -145,9 +146,14 @@ func (a *app) register(w http.ResponseWriter, r *http.Request) {
 			RegisteredAt: time.Now(),
 		},
 	}
+	if u.PasswordHash == "" {
+		a.mu.Unlock()
+		http.Error(w, "password setup failed", http.StatusInternalServerError)
+		return
+	}
 	a.users[username] = u
 	a.mu.Unlock()
-	a.setSession(w, username)
+	a.setSession(w, r, username)
 	http.Redirect(w, r, "/ttt", http.StatusSeeOther)
 }
 
@@ -167,7 +173,7 @@ func (a *app) login(w http.ResponseWriter, r *http.Request) {
 		a.render(w, r, "Login", loginTpl, map[string]any{"Error": "Login failed."})
 		return
 	}
-	a.setSession(w, u.Username)
+	a.setSession(w, r, u.Username)
 	http.Redirect(w, r, "/status/"+u.Username, http.StatusSeeOther)
 }
 
@@ -177,7 +183,7 @@ func (a *app) logout(w http.ResponseWriter, r *http.Request) {
 		delete(a.sessions, c.Value)
 		a.mu.Unlock()
 	}
-	http.SetCookie(w, &http.Cookie{Name: "pbt_session", Value: "", MaxAge: -1, Path: "/", HttpOnly: true, SameSite: http.SameSiteLaxMode})
+	http.SetCookie(w, &http.Cookie{Name: "pbt_session", Value: "", MaxAge: -1, Path: "/", HttpOnly: true, SameSite: http.SameSiteLaxMode, Secure: r.TLS != nil})
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
@@ -540,7 +546,15 @@ func distanceKm(a, b string) *float64 {
 	if !okA || !okB {
 		return nil
 	}
-	d := math.Sqrt((la-lb)*(la-lb)+(loa-lob)*(loa-lob)) * 100
+	const earthRadiusKm = 6371.0
+	lat1 := la * math.Pi / 180.0
+	lat2 := lb * math.Pi / 180.0
+	dLat := (lb - la) * math.Pi / 180.0
+	dLon := (lob - loa) * math.Pi / 180.0
+	sinLat := math.Sin(dLat / 2)
+	sinLon := math.Sin(dLon / 2)
+	h := sinLat*sinLat + math.Cos(lat1)*math.Cos(lat2)*sinLon*sinLon
+	d := 2 * earthRadiusKm * math.Atan2(math.Sqrt(h), math.Sqrt(1-h))
 	return &d
 }
 
@@ -630,34 +644,29 @@ func (a *app) requireAuth(w http.ResponseWriter, r *http.Request) *User {
 	return u
 }
 
-func (a *app) setSession(w http.ResponseWriter, username string) {
+func (a *app) setSession(w http.ResponseWriter, r *http.Request, username string) {
 	b := make([]byte, 32)
-	_, _ = rand.Read(b)
+	if _, err := rand.Read(b); err != nil {
+		http.Error(w, "session setup failed", http.StatusInternalServerError)
+		return
+	}
 	token := hex.EncodeToString(b)
 	a.mu.Lock()
 	a.sessions[token] = username
 	a.mu.Unlock()
-	http.SetCookie(w, &http.Cookie{Name: "pbt_session", Value: token, Path: "/", HttpOnly: true, SameSite: http.SameSiteLaxMode})
+	http.SetCookie(w, &http.Cookie{Name: "pbt_session", Value: token, Path: "/", HttpOnly: true, SameSite: http.SameSiteLaxMode, Secure: r.TLS != nil})
 }
 
 func hashPassword(password string) string {
-	salt := make([]byte, 16)
-	_, _ = rand.Read(salt)
-	h := sha256.Sum256(append(salt, []byte(password)...))
-	return hex.EncodeToString(salt) + "$" + hex.EncodeToString(h[:])
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return ""
+	}
+	return string(hash)
 }
 
 func checkPassword(stored, password string) bool {
-	parts := strings.Split(stored, "$")
-	if len(parts) != 2 {
-		return false
-	}
-	salt, err := hex.DecodeString(parts[0])
-	if err != nil {
-		return false
-	}
-	h := sha256.Sum256(append(salt, []byte(password)...))
-	return parts[1] == hex.EncodeToString(h[:])
+	return bcrypt.CompareHashAndPassword([]byte(stored), []byte(password)) == nil
 }
 
 func atoiDefault(s string, d int) int {

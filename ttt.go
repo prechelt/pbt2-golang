@@ -1,5 +1,7 @@
 package main
 
+import "strconv"
+
 type Question struct {
 	Prompt string
 	AKey   string
@@ -76,7 +78,7 @@ func evaluateAnswers(answers map[int]string) *TttResult {
 	l3, d3, v3 := dim(counts, "T", "F", "T")
 	l4, d4, v4 := dim(counts, "J", "P", "J")
 	return &TttResult{
-		Result:      l1 + "+" + itoa(d1) + l2 + "+" + itoa(d2) + l3 + "+" + itoa(d3) + l4 + "+" + itoa(d4),
+		Result:      l1 + "+" + strconv.Itoa(d1) + l2 + "+" + strconv.Itoa(d2) + l3 + "+" + strconv.Itoa(d3) + l4 + "+" + strconv.Itoa(d4),
 		Type:        l1 + l2 + l3 + l4,
 		Temperament: l2 + l4,
 		EI:          v1,
@@ -105,16 +107,4 @@ func min(v ...int) int {
 		}
 	}
 	return m
-}
-
-func itoa(v int) string {
-	if v == 0 {
-		return "0"
-	}
-	s := ""
-	for v > 0 {
-		s = string(rune('0'+(v%10))) + s
-		v /= 10
-	}
-	return s
 }
